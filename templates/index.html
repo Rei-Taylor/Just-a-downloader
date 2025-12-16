@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TubeSaver · Download YouTube Videos & Audio</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">❚❚</div>
+                <h1 class="logo-text">TubeSaver</h1>
+            </div>
+            <p class="tagline">Fast, free, and easy YouTube downloader</p>
+        </header>
+
+        <main x-data="downloaderApp()">
+            <!-- URL Input Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        Enter YouTube URL
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="input-group">
+                        <label for="url" class="input-label">Video URL</label>
+                        <div class="input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                <polyline points="15 3 21 3 21 9"></polyline>
+                                <line x1="10" y1="14" x2="21" y2="3"></line>
+                            </svg>
+                            <input 
+                                type="url" 
+                                id="url"
+                                x-model="url"
+                                @keyup.enter="fetchMetadata"
+                                class="url-input"
+                                placeholder="https://www.youtube.com/watch?v=..."
+                            >
+                        </div>
+                    </div>
+                    <button 
+                        @click="fetchMetadata"
+                        :disabled="loading || !url"
+                        class="btn btn-primary w-full"
+                    >
+                        <span x-show="!loading">Fetch Video Info</span>
+                        <span x-show="loading" class="flex items-center justify-center">
+                            <span class="spinner mr-2"></span> Loading...
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Error Message -->
+            <div x-show="error" class="error-card fade-in">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-1">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span x-text="error"></span>
+            </div>
+
+            <!-- Video Preview Card -->
+            <div x-show="metadata" class="card fade-in">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        Video Details
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="video-preview">
+                        <div class="thumbnail-container">
+                            <img 
+                                :src="metadata.thumbnail" 
+                                :alt="metadata.title"
+                                class="thumbnail-img"
+                                loading="lazy"
+                            >
+                        </div>
+                        <div class="video-info">
+                            <h3 class="video-title" x-text="metadata.title"></h3>
+                            <div class="stats">
+                                <div class="stat-item">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M2.3 12.7L8 16l6-6 6-3-2.3-4.7L12 5"></path>
+                                    </svg>
+                                    <span x-text="formatNumber(metadata.views) + ' views'"></span>
+                                </div>
+                                <div class="stat-item">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
+                                    </svg>
+                                    <span x-text="formatNumber(metadata.likes) + ' likes'"></span>
+                                </div>
+                            </div>
+                            
+                            <!-- Download Options -->
+                            <div class="download-section">
+                                <div class="input-group">
+                                    <label for="resolution" class="input-label">Select Quality</label>
+                                    <select 
+                                        x-model="selectedResolution"
+                                        class="resolution-select"
+                                        :disabled="!metadata.available_resolutions.length"
+                                    >
+                                        <template x-for="res in metadata.available_resolutions" :key="res">
+                                            <option :value="res" x-text="res"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                                
+                                <div class="download-options">
+                                    <div class="download-btn-group">
+                                        <button 
+                                            @click="downloadVideo"
+                                            :disabled="downloadingVideo"
+                                            class="btn btn-video w-full"
+                                        >
+                                            <span x-show="!downloadingVideo">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                                </svg>
+                                                Download Video
+                                            </span>
+                                            <span x-show="downloadingVideo" class="flex items-center justify-center">
+                                                <span class="spinner mr-2"></span> Downloading...
+                                            </span>
+                                        </button>
+                                    </div>
+                                    <div class="download-btn-group">
+                                        <button 
+                                            @click="downloadAudio"
+                                            :disabled="downloadingAudio"
+                                            class="btn btn-audio w-full"
+                                        >
+                                            <span x-show="!downloadingAudio">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M18 8a3 3 0 0 0 0-6H6a3 3 0 0 0 0 6v10a3 3 0 1 0 0-6v-4"></path>
+                                                    <path d="M12 11h4a2 2 0 1 1 0 4v3a2 2 0 0 1-4 0v-3"></path>
+                                                    <path d="M18 18v3"></path>
+                                                    <path d="M14 19.5v1.5"></path>
+                                                    <path d="M10 18v3"></path>
+                                                    <path d="M6 19.5v1.5"></path>
+                                                </svg>
+                                                Download Audio
+                                            </span>
+                                            <span x-show="downloadingAudio" class="flex items-center justify-center">
+                                                <span class="spinner mr-2"></span> Downloading...
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="footer">
+                <p>TubeSaver · Download YouTube videos and audio with a single click</p>
+            </footer>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('downloaderApp', () => ({
+                url: '',
+                metadata: null,
+                loading: false,
+                downloadingVideo: false,
+                downloadingAudio: false,
+                error: null,
+                selectedResolution: '720p',
+                
+                fetchMetadata() {
+                    this.resetState();
+                    this.loading = true;
+                    
+                    fetch('/api/metadata', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({url: this.url})
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Failed to fetch video details');
+                        return response.json();
+                    })
+                    .then(data => {
+                        this.metadata = data;
+                        this.selectedResolution = data.available_resolutions.includes('720p') 
+                            ? '720p' 
+                            : data.available_resolutions[0];
+                    })
+                    .catch(err => {
+                        this.error = err.message || 'An error occurred while fetching video info';
+                        console.error(err);
+                    })
+                    .finally(() => {
+                        this.loading = false;
+                    });
+                },
+                
+                downloadVideo() {
+                    this.downloadingVideo = true;
+                    this.error = null;
+                    
+                    fetch('/api/download/video', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ 
+                            url: this.url, 
+                            resolution: this.selectedResolution 
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Failed to download video');
+                        return response.json();
+                    })
+                    .then(() => {
+                        this.showNotification('Video downloaded successfully!', 'success');
+                    })
+                    .catch(err => {
+                        this.error = err.message || 'Video download failed';
+                        console.error(err);
+                    })
+                    .finally(() => {
+                        this.downloadingVideo = false;
+                    });
+                },
+                
+                downloadAudio() {
+                    this.downloadingAudio = true;
+                    this.error = null;
+                    
+                    fetch('/api/download/audio', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ url: this.url })
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Failed to download audio');
+                        return response.json();
+                    })
+                    .then(() => {
+                        this.showNotification('Audio downloaded successfully!', 'success');
+                    })
+                    .catch(err => {
+                        this.error = err.message || 'Audio download failed';
+                        console.error(err);
+                    })
+                    .finally(() => {
+                        this.downloadingAudio = false;
+                    });
+                },
+                
+                resetState() {
+                    this.metadata = null;
+                    this.error = null;
+                },
+                
+                formatNumber(num) {
+                    if (!num) return '0';
+                    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+                    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+                    return num.toString();
+                },
+                
+                showNotification(message, type = 'info') {
+                    
+                    alert(message);
+                }
+            }));
+        });
+    </script>
+</body>
+</html>
