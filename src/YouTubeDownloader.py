@@ -7,7 +7,7 @@ import logging
 import sys
 
 BASE_DOWNLOAD_PATH = "./downloads"
-from .utils import sanitize_filename
+from .utils import sanitize_filename, resource_path
 
 class Downloader:
     def __init__(self, url: str, output_path: str = BASE_DOWNLOAD_PATH):
@@ -119,7 +119,7 @@ class Downloader:
     def merge_video_audio_ffmpeg(self, video_path, audio_path, output_path):
         try:
             subprocess.run(
-                ['src/ffmpeg/ffmpeg.exe', '-version'],
+                [resource_path("ffmpeg/ffmpeg.exe"), '-version'],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 check=True
@@ -129,7 +129,7 @@ class Downloader:
             
 
         command = [
-            'src/ffmpeg/ffmpeg',
+            f'{resource_path("ffmpeg/ffmpeg.exe")}',
             '-i', video_path,
             '-i', audio_path,
             '-c:v', 'copy',    
