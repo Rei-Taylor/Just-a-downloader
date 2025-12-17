@@ -12,14 +12,17 @@ import webview
 from src.YouTubeDownloader import Downloader
 
 from src.DL import IDMDownloader
-from src.utils import sanitize_filename
+from src.utils import sanitize_filename, resource_path
 from fastapi.responses import StreamingResponse
 
 
 BASE_DOWNLOAD_PATH = "./downloads"
 app = FastAPI()
-templates = Jinja2Templates(directory="templates")
-app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory=resource_path("templates"))
+static_path = resource_path("static")
+app.mount("/static", StaticFiles(directory=static_path), name="static")
+
+
 
 class UrlRequest(BaseModel):
     url: str
@@ -130,9 +133,10 @@ if __name__ == "__main__":
     server_thread = threading.Thread(target=start_server, daemon=True)
     server_thread.start()
     
-    import time
+    import time, sys
     time.sleep(1)
     
+    sys.stdout = open("log.txt", "w")
     window = webview.create_window(
         "YouTube Downloader",
         "http://127.0.0.1:8000",

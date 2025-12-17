@@ -1,4 +1,5 @@
-
+from pathlib import Path
+import sys
 
 def sanitize_filename(filename):
         invalid_chars = {
@@ -20,3 +21,8 @@ def sanitize_filename(filename):
             filename = filename[:max_length]
         
         return filename
+
+def resource_path(relative_path: str) -> Path:
+    base_path = getattr(sys, '_MEIPASS', Path(__file__).parent)
+    print(base_path)
+    return Path(base_path) / relative_path
