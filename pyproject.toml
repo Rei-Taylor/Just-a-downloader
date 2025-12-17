@@ -7,5 +7,6 @@ requires-python = ">=3.12.6"
 dependencies = [
     "fastapi>=0.124.4",
     "moviepy==1.0.3",
+    "pytubefix>=10.3.6",
     "pywebview>=6.1",
 ]

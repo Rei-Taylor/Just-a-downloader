@@ -3,8 +3,8 @@ from pytubefix import YouTube
 from pathlib import Path
 import os
 import typing as t
-
 BASE_DOWNLOAD_PATH = "./downloads"
+from .utils import sanitize_filename
 
 class Downloader:
     def __init__(self, url: str, output_path: str = BASE_DOWNLOAD_PATH):
@@ -26,26 +26,7 @@ class Downloader:
         self.videos.mkdir(exist_ok=True)
         self.Audio.mkdir(exist_ok=True)
 
-    def sanitize_filename(self, filename):
-        invalid_chars = {
-            '\\': '', '/': '', ':': '', '*': '', '?': '', '"': '', 
-            '<': '', '>': '', '|': '', "'": '', '™': '', '®': '', '©': '',
-            '\u00a9': '', '\u00ae': '', '\u2122': '', '\u2019': '', '\u2018': '',
-            '\u201c': '', '\u201d': '', '\u2026': '', '\u2122': '', '\ufe0f': ''
-        }
-        
-        for char, replacement in invalid_chars.items():
-            filename = filename.replace(char, replacement)
-        
-        filename = ''.join(c for c in filename if ord(c) < 128)
-        
-        filename = filename.strip().strip('.')
-        
-        max_length = 200 
-        if len(filename) > max_length:
-            filename = filename[:max_length]
-        
-        return filename
+    
     def get_available_resolutions(self) -> list:
         resolutions = set()
         for stream in self.yt.streams.filter(only_video=True):
@@ -75,7 +56,7 @@ class Downloader:
                     if not audio_stream:
                         raise ValueError("No audio stream available")
                     
-                    safe_title = self.sanitize_filename(self.title)
+                    safe_title = sanitize_filename(self.title)
                     temp_video = self.videos / f"{safe_title}_temp_video.mp4"
                     temp_audio = self.videos / f"{safe_title}_temp_audio.mp3"
                     output_file = self.videos / f"{safe_title}_{resolution}.mp4"

@@ -1,5 +1,5 @@
-import os
-import threading
+import os, json, asyncio
+import threading, uuid
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -9,10 +9,14 @@ from pydantic import BaseModel
 from pathlib import Path
 import typing as t
 import webview
-from downloader import Downloader
+from src.YouTubeDownloader import Downloader
+
+from src.DL import IDMDownloader
+from src.utils import sanitize_filename
+from fastapi.responses import StreamingResponse
 
 
-
+BASE_DOWNLOAD_PATH = "./downloads"
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -23,6 +27,11 @@ class UrlRequest(BaseModel):
 class DownloadRequest(BaseModel):
     url: str
     resolution: t.Optional[str] = None
+
+class FileRequest(BaseModel):
+    url: str
+    max_workers: int = 8
+    chunk_size_mb: int = 1    
 
 @app.post("/api/metadata")
 async def get_metadata(request: UrlRequest):
@@ -49,6 +58,66 @@ async def download_audio(request: DownloadRequest):
         return {"success": True, "message": f"Audio downloaded to {downloader.Audio}"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+    
+@app.post("/api/file/info")
+async def get_file_info(request: FileRequest):
+    try:
+        print(request)
+        downloader = IDMDownloader(
+            url=request.url,
+            max_workers=request.max_workers,
+            chunk_size_mb=request.chunk_size_mb
+        )
+        info = downloader.get_file_info()
+        
+        return info
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+active_downloads = {}
+
+@app.post("/api/file/download")
+async def download_file(request: FileRequest):
+    try:
+        def generator():
+            downloader = IDMDownloader(
+                url=request.url,
+                max_workers=request.max_workers,
+                chunk_size_mb=request.chunk_size_mb,
+                output_dir=BASE_DOWNLOAD_PATH
+            )
+            
+            for progress in downloader.download():
+                yield f"data: {json.dumps(progress)}\n\n"
+        
+        return StreamingResponse(generator(), media_type="text/event-stream")
+    
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/api/file/download/progress")
+async def download_progress(download_id: str):
+    if download_id not in active_downloads:
+        raise HTTPException(status_code=404, detail="Download ID not found")
+    
+    download_info = active_downloads[download_id]
+    
+    async def event_generator():
+        downloader = IDMDownloader(
+            url=download_info["url"],
+            max_workers=download_info["max_workers"],
+            chunk_size_mb=download_info["chunk_size_mb"],
+            
+        )
+        
+        for progress in downloader.download():
+            yield f"data: {json.dumps(progress)}\n\n"
+            await asyncio.sleep(0.1)
+        
+        if download_id in active_downloads:
+            del active_downloads[download_id]
+    
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 @app.get("/")
 async def home(request: Request):
@@ -58,15 +127,12 @@ def start_server():
     uvicorn.run(app, host="127.0.0.1", port=8000)
 
 if __name__ == "__main__":
-    # Start FastAPI server in background thread
     server_thread = threading.Thread(target=start_server, daemon=True)
     server_thread.start()
     
-    # Wait for server to start
     import time
     time.sleep(1)
     
-    # Create pywebview window
     window = webview.create_window(
         "YouTube Downloader",
         "http://127.0.0.1:8000",
