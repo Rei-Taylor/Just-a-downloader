@@ -8,10 +8,10 @@ import sys
 
 BASE_DOWNLOAD_PATH = "./downloads"
 from .utils import sanitize_filename, resource_path
-
+proxies = {"http": '88.198.212.91:3128'}
 class Downloader:
     def __init__(self, url: str, output_path: str = BASE_DOWNLOAD_PATH):
-        self.yt = YouTube(url=url)
+        self.yt = YouTube(url=url, proxies=proxies)
         self.title = self.yt.title
         self.output = output_path
         self.thumbnail = self.yt.thumbnail_url
@@ -19,6 +19,7 @@ class Downloader:
         self.views = self.yt.views
         self.videos = None
         self.audio = None 
+        
         self.ensure_path()
 
     def ensure_path(self):

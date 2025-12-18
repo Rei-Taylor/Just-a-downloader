@@ -15,7 +15,7 @@ import time,os
 from waitress import serve
 app = Dash(__name__,use_async=True,suppress_callback_exceptions=True,external_stylesheets=["static/style.css"])
 
-dcc.Download()
+app.title = "TubeSaver"
 
 app.layout = html.Div(
     className="container",
@@ -36,6 +36,12 @@ app.layout = html.Div(
                 )
             ]
         ),
+        html.Footer(
+            className="footer",
+            children=[
+                html.P("TubeSaver · Download YouTube videos and any file with lightning speed"),
+                html.P("Made with ❤️ by Rei Taylor")
+            ])
         
     ]
 )
