@@ -1,8 +1,10 @@
-from dash import html 
+from dash import html , dcc
 from .download_button import download_button
+from .options import Options
 
+from .Icon import Icon
 
-def download_section():
+def download_section(resolutions : list):
     download = html.Div(
         className="download-section",
         children=[
@@ -19,12 +21,8 @@ def download_section():
                     html.Select( 
                         className="resolution-select",
                         children=[
-                            html.Option(
-                                children="hello"
-                            ),
-                            html.Option(
-                                children="hi"
-                            ),
+                            Options(value, index )
+                             for index,value in enumerate(resolutions)
                         ]
 
                     )
@@ -33,9 +31,13 @@ def download_section():
             html.Div(
                 className="download-options",
                 children=[
-                    download_button("Download Video", "video"),
-                    download_button("Download Video", "audio"),
+                    download_button("Download Video", "video", 1, "line-md:download-loop"),
+                    download_button("Download Audio", "audio", 2, "formkit:fileaudio"),
+                    dcc.Download(id="download-video")
                 ]
+            ),
+            html.Div(
+                id="Final-Result"
             )
         ]
     )

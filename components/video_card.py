@@ -1,9 +1,9 @@
 from dash import html, dcc 
 from .download_section import download_section
+from .Icon import Icon
 
 
-
-def video_card():
+def video_card(title : str, thumbnail : str ,view : int , like : int, resolutions : list):
     video = html.Div(
         className="card fade-in",
         children=[
@@ -13,7 +13,7 @@ def video_card():
                     html.H2(
                         className="card-title",
                         children=[
-                            "Video Details"
+                            Icon("line-md:play"),"Video Details"
                         ]
                     )
                 ]
@@ -28,7 +28,10 @@ def video_card():
                                 className="thumbnail-container",
                                 children=[
                                     html.Img(
-                                        alt="Hello"
+                                        alt="Hello",
+                                        src=f"{thumbnail}",
+
+                                        className="thumbnail-img",
                                     )
                                 ]
                             ),
@@ -37,7 +40,7 @@ def video_card():
                                 children=[
                                     html.H3(
                                         className="video-title",
-                                        children="Video"
+                                        children=f"{title}"
                                     ),
                                     html.Div(
                                         className="stats",
@@ -45,22 +48,25 @@ def video_card():
                                             html.Div(
                                                 className="stat-item",
                                                 children=[
+                                                    Icon("icon-park-outline:trend"),
                                                     html.Span(
-                                                        children="81 views"
+                                                        children=f"{view} views"
                                                     )
                                                 ]
                                             ),
                                             html.Div(
                                                 className="stat-item",
                                                 children=[
+                                                    Icon("iconamoon:like-duotone"),
                                                     html.Span(
-                                                        children="81 likes"
+                                                        children=f"{like}likes"
                                                     )
                                                 ]
                                             ),
-                                            download_section()
+                                            
                                         ]
-                                    )
+                                    ),
+                                    download_section(resolutions=resolutions)
                                 ]
                             )
                         ]

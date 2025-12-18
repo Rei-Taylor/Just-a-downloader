@@ -1,5 +1,5 @@
 from dash import html, dcc
-
+from .Icon import Icon
 def YouTube():
     card_ = html.Div(
         className="card",
@@ -10,6 +10,7 @@ def YouTube():
                     html.H2(
                         className="card-title",
                         children=[
+                            Icon("material-icon-theme:url"),
                             "Enter YouTube URL"
                         ]
                     )
@@ -22,17 +23,24 @@ def YouTube():
                         className="input-group",
                         children=[
                             html.Label(
-                                className="input-lable",
+                                className="input-label",
                                 children=["Vidoe URL"],
                                 htmlFor="url"
                             ),
-                            dcc.Input(
-                                type="url",
-                                id="url",
-                                className="url-input",
-                                placeholder="https://www.youtube.com/watch?v=...",
-                                style={"margin-bottom" : "5px"}
+                            html.Div(
+                                className="input-icon",
+                                children=[
+                                    Icon("quill:link-out"),
+                                    dcc.Input(
+                                        type="url",
+                                        id="url",
+                                        className="url-input",
+                                        placeholder="https://www.youtube.com/watch?v=...",
+                                        style={"margin-bottom" : "5px"}
+                                    ),
+                                ]
                             ),
+                            
                             html.Button(
                                 className="btn btn-primary w-full",
                                 id="show-info",

@@ -1,5 +1,5 @@
 from dash import html 
-
+from .Icon import Icon
 def Tabs():
     tabs_ = html.Div(
         className="tabs-container",
@@ -11,6 +11,7 @@ def Tabs():
                         className="tab-btn active-tab",
                         id="Youtube-tab",
                         children=[
+                            Icon("mingcute:youtube-line"),
                             "YouTube Downloader"
                         ]
                         

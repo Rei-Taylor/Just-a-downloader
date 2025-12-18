@@ -72,7 +72,7 @@ class Downloader:
                 filename = f"{safe_title}_{resolution or 'highest'}.{stream.mime_type.split('/')[-1]}"
                 stream.download(output_path=str(self.videos), filename=filename)
                 print(f"Download completed (progressive): {output_file}")
-                return
+                return output_file, filename
 
             print(f"Preparing adaptive streams for {resolution}...")
             video_stream = self.yt.streams.filter(
@@ -108,6 +108,7 @@ class Downloader:
             os.remove(audio_file)
             
             print(f"Download completed (adaptive): {output_file}")
+            return filename
             
         except Exception as e:
             # Attempt cleanup on failure
